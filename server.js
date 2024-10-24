@@ -10,7 +10,7 @@ app.use(bodyParser.json());
 
 // CORS configuration
 const allowedOrigins = ['https://makeit-fawn.vercel.app'];
-app.use(cors({
+app.use(cors(/*{
     origin: function (origin, callback) {
         // Allow requests with no origin (like mobile apps or curl requests)
         if (!origin) return callback(null, true);
@@ -20,7 +20,7 @@ app.use(cors({
         }
         return callback(null, true);
     }
-}));
+}*/));
 
 // MongoDB connection
 mongoose.connect(process.env.MONGO_URI, {

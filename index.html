@@ -39,12 +39,12 @@
 
     <div id="message" class="message"></div>
     <div id="error" class="error"></div>
-
+<!--
     <h2>Admin Download Responses</h2>
     <input type="password" id="adminPassword" placeholder="Enter Admin Password">
     <button id="downloadBtn">Download Responses</button>
     <div id="adminError" class="error"></div>
-
+-->
     <script>
         const form = document.getElementById('userForm');
         const messageDiv = document.getElementById('message');
@@ -95,7 +95,7 @@
                 errorDiv.textContent = 'An error occurred. Please try again later.';
             }
         };
-
+/*
         // Handle admin password and download responses
         downloadBtn.onclick = async () => {
             const password = adminPasswordInput.value;
@@ -131,7 +131,7 @@
             } catch (error) {
                 adminErrorDiv.textContent = 'An error occurred while trying to download the responses.';
             }
-        };
+        };*/
 
         // Disable back buttons after submission
         function disableBackButtons() {

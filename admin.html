@@ -56,6 +56,7 @@
                     a.click();
                     a.remove();
                     adminErrorDiv.textContent = ''; // Clear admin error on success
+                    disableBackButtons();
                 } else {
                     const result = await response.json();
                     adminErrorDiv.textContent = result.message; // Show the error message
@@ -65,6 +66,12 @@
             }
         };
 
+        function disableBackButtons() {
+            history.pushState(null, '', location.href);
+            window.onpopstate = function () {
+                history.pushState(null, '', location.href);
+            };
+        }
     </script>
 </body>
 </html>

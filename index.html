@@ -269,7 +269,7 @@
         messageDiv.style.display = 'none';  // Hide previous messages
 
         try {
-            const response = await fetch('/api/submit', {
+            const response = await fetch('https://makeit-be.onrender.com/api/submit', {
                 method: 'POST',
                 headers: {
                     'Content-Type': 'application/json',

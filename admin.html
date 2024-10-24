@@ -1,0 +1,70 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Document</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            padding: 20px;
+        }
+        .error {
+            color: red;
+        }
+
+    </style>
+</head>
+<body>
+    <h2>Admin Download Responses</h2>
+    <input type="password" id="adminPassword" placeholder="Enter Admin Password">
+    <button id="downloadBtn">Download Responses</button>
+    <div id="adminError" class="error"></div>
+    <script>
+        const form = document.getElementById('userForm');
+        const messageDiv = document.getElementById('message');
+        const errorDiv = document.getElementById('error');
+        const downloadBtn = document.getElementById('downloadBtn');
+        const adminPasswordInput = document.getElementById('adminPassword');
+        const adminErrorDiv = document.getElementById('adminError');
+
+        // Handle admin password and download responses
+        downloadBtn.onclick = async () => {
+            const password = adminPasswordInput.value;
+
+            if (!password) {
+                adminErrorDiv.textContent = 'Please enter the admin password.';
+                return;
+            }
+
+            try {
+                const response = await fetch('https://makeit-be.onrender.com/api/download', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify({ password })
+                });
+
+                if (response.ok) {
+                    const blob = await response.blob();
+                    const url = window.URL.createObjectURL(blob);
+                    const a = document.createElement('a');
+                    a.href = url;
+                    a.download = 'responses.xlsx';
+                    document.body.appendChild(a);
+                    a.click();
+                    a.remove();
+                    adminErrorDiv.textContent = ''; // Clear admin error on success
+                } else {
+                    const result = await response.json();
+                    adminErrorDiv.textContent = result.message; // Show the error message
+                }
+            } catch (error) {
+                adminErrorDiv.textContent = 'An error occurred while trying to download the responses.';
+            }
+        };
+
+    </script>
+</body>
+</html>

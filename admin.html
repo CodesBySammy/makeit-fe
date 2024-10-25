@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Admin Download Page</title>
+    <title>Admin Dashboard</title>
     <style>
         body {
             font-family: Arial, sans-serif;
@@ -11,37 +11,97 @@
         }
         .error {
             color: red;
-            margin-top: 10px;
+        }
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-top: 20px;
+        }
+        table, th, td {
+            border: 1px solid black;
+        }
+        th, td {
+            padding: 10px;
+            text-align: left;
+        }
+        th {
+            background-color: #f2f2f2;
+        }
+        .edit-section {
+            margin-top: 20px;
         }
     </style>
 </head>
 <body>
-    <h2>Admin Download Responses</h2>
+    <h2>Admin Dashboard</h2>
+
     <input type="password" id="adminPassword" placeholder="Enter Admin Password">
     <button id="downloadBtn">Download Responses</button>
-    <div id="adminError" class="error" aria-live="assertive"></div>
+    <button id="showBtn">Show All Responses</button>
+    <button id="markAllPresentBtn">Mark All Present</button>
+    <button id="markAllAbsentBtn">Mark All Absent</button>
+    <div id="adminError" class="error"></div>
+
+    <div id="tableContainer">
+        <table id="responseTable">
+            <thead>
+                <tr>
+                    <th>Name</th>
+                    <th>Email</th>
+                    <th>Phone Number</th>
+                    <th>Submission Date</th>
+                    <th>Attendance</th>
+                    <th>Action</th>
+                </tr>
+            </thead>
+            <tbody>
+                <!-- Data rows will be inserted here dynamically -->
+            </tbody>
+        </table>
+    </div>
+
+    <!-- Edit Section -->
+    <div class="edit-section" id="editSection" style="display: none;">
+        <h3>Edit User Details</h3>
+        <input type="hidden" id="editUserId">
+        <label for="editName">Name:</label>
+        <input type="text" id="editName">
+        <label for="editEmail">Email:</label>
+        <input type="email" id="editEmail">
+        <label for="editPhone">Phone Number:</label>
+        <input type="text" id="editPhone">
+        <button id="saveEditBtn">Save Changes</button>
+        <div id="editError" class="error"></div>
+    </div>
+
     <script>
         const downloadBtn = document.getElementById('downloadBtn');
+        const showBtn = document.getElementById('showBtn');
+        const markAllPresentBtn = document.getElementById('markAllPresentBtn');
+        const markAllAbsentBtn = document.getElementById('markAllAbsentBtn');
+        const saveEditBtn = document.getElementById('saveEditBtn');
         const adminPasswordInput = document.getElementById('adminPassword');
         const adminErrorDiv = document.getElementById('adminError');
+        const editErrorDiv = document.getElementById('editError');
+        const responseTableBody = document.querySelector('#responseTable tbody');
+        const editSection = document.getElementById('editSection');
+        const editUserId = document.getElementById('editUserId');
+        const editName = document.getElementById('editName');
+        const editEmail = document.getElementById('editEmail');
+        const editPhone = document.getElementById('editPhone');
 
+        // Download responses as Excel file
         downloadBtn.onclick = async () => {
             const password = adminPasswordInput.value.trim();
-
             if (!password) {
                 adminErrorDiv.textContent = 'Please enter the admin password.';
                 return;
             }
 
-            downloadBtn.disabled = true;
-            adminErrorDiv.textContent = ''; // Clear any previous error
-
             try {
                 const response = await fetch('https://makeit-be.vercel.app/api/download', {
                     method: 'POST',
-                    headers: {
-                        'Content-Type': 'application/json',
-                    },
+                    headers: { 'Content-Type': 'application/json' },
                     body: JSON.stringify({ password })
                 });
 
@@ -54,15 +114,149 @@
                     document.body.appendChild(a);
                     a.click();
                     a.remove();
-                    adminPasswordInput.value = ''; // Clear password on success
+                    adminErrorDiv.textContent = ''; // Clear error on success
                 } else {
                     const result = await response.json();
-                    adminErrorDiv.textContent = result.message; // Show error message from server
+                    adminErrorDiv.textContent = result.message;
                 }
             } catch (error) {
                 adminErrorDiv.textContent = 'An error occurred while downloading the responses.';
-            } finally {
-                downloadBtn.disabled = false; // Re-enable button
+            }
+        };
+
+        // Fetch and display all responses
+        showBtn.onclick = async () => {
+            const password = adminPasswordInput.value.trim();
+            if (!password) {
+                adminErrorDiv.textContent = 'Please enter the admin password.';
+                return;
+            }
+
+            try {
+                const response = await fetch('https://makeit-be.vercel.app/api/show', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ password })
+                });
+
+                if (response.ok) {
+                    const data = await response.json();
+                    adminErrorDiv.textContent = '';
+                    responseTableBody.innerHTML = '';
+
+                    data.forEach(user => {
+                        const row = document.createElement('tr');
+                        row.innerHTML = `
+                            <td>${user.name}</td>
+                            <td>${user.email}</td>
+                            <td>${user.phone}</td>
+                            <td>${new Date(user.createdAt).toLocaleString('en-IN', { timeZone: 'Asia/Kolkata' })}</td>
+                            <td>
+                                <select onchange="updateAttendance('${user._id}', this.value)">
+                                    <option value="Present" ${user.attendance === 'Present' ? 'selected' : ''}>Present</option>
+                                    <option value="Absent" ${user.attendance === 'Absent' ? 'selected' : ''}>Absent</option>
+                                </select>
+                            </td>
+                            <td><button onclick="editUser('${user._id}', '${user.name}', '${user.email}', '${user.phone}')">Edit</button></td>
+                        `;
+                        responseTableBody.appendChild(row);
+                    });
+                } else {
+                    const result = await response.json();
+                    adminErrorDiv.textContent = result.message;
+                }
+            } catch (error) {
+                adminErrorDiv.textContent = 'An error occurred while fetching the responses.';
+            }
+        };
+
+        // Mark all users as present
+        markAllPresentBtn.onclick = () => updateAllAttendance('Present');
+
+        // Mark all users as absent
+        markAllAbsentBtn.onclick = () => updateAllAttendance('Absent');
+
+        // Update attendance for all users
+        async function updateAllAttendance(status) {
+            const password = adminPasswordInput.value.trim();
+            if (!password) {
+                adminErrorDiv.textContent = 'Please enter the admin password.';
+                return;
+            }
+
+            try {
+                const response = await fetch(`https://makeit-be.vercel.app/api/attendance`, {
+                    method: 'PUT',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ password, status })
+                });
+
+                if (response.ok) {
+                    adminErrorDiv.textContent = '';
+                    showBtn.click(); // Refresh the list to show updated attendance
+                } else {
+                    const result = await response.json();
+                    adminErrorDiv.textContent = result.message;
+                }
+            } catch (error) {
+                adminErrorDiv.textContent = 'An error occurred while updating attendance.';
+            }
+        }
+
+        // Update attendance for a specific user
+        async function updateAttendance(id, status) {
+            const password = adminPasswordInput.value.trim();
+            try {
+                await fetch(`https://makeit-be.vercel.app/api/attendance/${id}`, {
+                    method: 'PUT',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ password, status })
+                });
+            } catch (error) {
+                adminErrorDiv.textContent = 'An error occurred while updating attendance.';
+            }
+        }
+
+        // Edit user details
+        window.editUser = (id, name, email, phone) => {
+            editUserId.value = id;
+            editName.value = name;
+            editEmail.value = email;
+            editPhone.value = phone;
+            editSection.style.display = 'block';
+        };
+
+        saveEditBtn.onclick = async () => {
+            const id = editUserId.value;
+            const updatedUser = {
+                name: editName.value.trim(),
+                email: editEmail.value.trim(),
+                phone: editPhone.value.trim()
+            };
+            const password = adminPasswordInput.value.trim();
+
+            if (!password || !updatedUser.name || !updatedUser.email || !updatedUser.phone) {
+                editErrorDiv.textContent = 'Please fill in all fields and provide the admin password.';
+                return;
+            }
+
+            try {
+                const response = await fetch(`https://makeit-be.vercel.app/api/edit/${id}`, {
+                    method: 'PUT',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ password, ...updatedUser })
+                });
+
+                if (response.ok) {
+                    editErrorDiv.textContent = '';
+                    showBtn.click();
+                    editSection.style.display = 'none';
+                } else {
+                    const result = await response.json();
+                    editErrorDiv.textContent = result.message;
+                }
+            } catch (error) {
+                editErrorDiv.textContent = 'An error occurred while saving changes.';
             }
         };
     </script>

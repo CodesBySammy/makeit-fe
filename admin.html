@@ -50,6 +50,7 @@
                     <th>Email</th>
                     <th>Phone Number</th>
                     <th>Submission Date</th>
+                    <th>Gender</th>
                     <th>Attendance</th>
                     <th>Action</th>
                 </tr>
@@ -151,6 +152,7 @@
                             <td>${user.email}</td>
                             <td>${user.phone}</td>
                             <td>${new Date(user.createdAt).toLocaleString('en-IN', { timeZone: 'Asia/Kolkata' })}</td>
+                            <td>${user.gender}</td>
                             <td>
                                 <select onchange="updateAttendance('${user._id}', this.value)">
                                     <option value="Present" ${user.attendance === 'Present' ? 'selected' : ''}>Present</option>

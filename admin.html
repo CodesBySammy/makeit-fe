@@ -151,8 +151,9 @@
                             <td>${user.name}</td>
                             <td>${user.email}</td>
                             <td>${user.phone}</td>
-                            <td>${new Date(user.createdAt).toLocaleString('en-IN', { timeZone: 'Asia/Kolkata' })}</td>
                             <td>${user.gender}</td>
+                            <td>${new Date(user.createdAt).toLocaleString('en-IN', { timeZone: 'Asia/Kolkata' })}</td>
+                            
                             <td>
                                 <select onchange="updateAttendance('${user._id}', this.value)">
                                     <option value="Present" ${user.attendance === 'Present' ? 'selected' : ''}>Present</option>
